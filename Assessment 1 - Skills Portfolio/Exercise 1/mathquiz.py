@@ -1,152 +1,195 @@
-from tkinter import *
+from tkinter import *  #imports the Tkinter functions, classes and widgets
+import random  #imports the random module to generate random numbers 
+from tkinter import messagebox  #imports messagebox to show pop ups
 
-root = Tk()
 
-import tkinter as tk
-from tkinter import messagebox
-import random
+score = 0  #stores the user's score
+question_count = 0  #keeps track of how many questions have been asked so far
+difficulty = None  #stores the selected difficulty level
+correct_answer = None  #stores the correct answer for the current question 
+first_attempt = True  #checks if user is on first attempt for a question 
+answer_history = []  #stores tuples of question, user answer, correct answer
 
 def displayMenu():
-    """Show difficulty selection screen."""
-    clear_frame()
-    title = tk.Label(root, text="DIFFICULTY LEVEL", font=("Arial", 24))
-    title.pack(pady=20)
+    clear_window()  #removes all widgets from the window
 
-    tk.Button(root, text="1. Easy", width=20, command=lambda: start_quiz(1)).pack(pady=10)
-    tk.Button(root, text="2. Moderate", width=20, command=lambda: start_quiz(2)).pack(pady=10)
-    tk.Button(root, text="3. Advanced", width=20, command=lambda: start_quiz(3)).pack(pady=10)
+    #title 
+    Label(root, text="Select Difficulty", bg=bg_color, fg="black",
+          font=("Times New roman", 20, "bold")).pack(pady=20)
+
+    #buttons for the difficulty level
+    Button(root, text="Easy",
+           command=lambda: start_quiz("Easy"), 
+           bg=btn_color, fg="black", font=("Arial", 15)).pack(pady=12)
+
+    Button(root, text="Moderate",
+           command=lambda: start_quiz("Moderate"),  
+           bg=btn_color, fg="black", font=("Arial", 15)).pack(pady=12)
+
+    Button(root, text="Advanced",
+           command=lambda: start_quiz("Advanced"),  
+           bg=btn_color, fg="black", font=("Arial", 15)).pack(pady=12)
 
 def randomInt(level):
-    """Return random numbers based on difficulty."""
-    if level == 1:   # 1-digit
-        return random.randint(1, 9)
-    elif level == 2: # 2-digit
-        return random.randint(10, 99)
-    elif level == 3: # 4-digit
-        return random.randint(1000, 9999)
+    if level == "Easy":
+        return random.randint(1, 9)  #random number from 1-10
+    elif level == "Moderate":
+        return random.randint(10, 99)  #random number from 10-99
+    elif level == "Advanced":
+        return random.randint(1000, 9999)  #random number from 1000-9999 
+    
+def generate_problem():
+    op = random.choice(["+", "-"])  #randomly choose + for addition or - for subtraction
+    n1 = randomInt(difficulty)  #generates first number
+    n2 = randomInt(difficulty)  #generates second number
 
-def decideOperation():
-    """Randomly choose + or -."""
-    return random.choice(["+", "-"])
+    #ensure easy difficulty subtraction never goes negative to keep the questions easy
+    if difficulty == "Easy" and op == "-" and n2 > n1:
+        n1, n2 = n2, n1  #swaps numbers so result is positive
 
-def displayProblem():
-    """Display the current math question."""
-    global num1, num2, operation, attempts
+    return n1, op, n2  #return numbers and operator
 
-    clear_frame()
-    question = f"{num1} {operation} {num2} = "
+def show_question():
+    global correct_answer, num1, num2, op, first_attempt
 
-    tk.Label(root, text=f"Question {current_question}/10", font=("Arial", 16)).pack(pady=10)
-    tk.Label(root, text=question, font=("Arial", 30)).pack(pady=15)
+    first_attempt = True  #reset first_attempt for new question
+    clear_window() 
 
-    answer_entry.delete(0, tk.END)
+    num1, op, num2 = generate_problem()  #generate question
+    correct_answer = eval(f"{num1} {op} {num2}")  #calculate correct answer
+    question_text = f"{num1} {op} {num2} ="  #format question string
+
+    #shows question number
+    Label(root, text=f"Question {question_count + 1}/10", bg=bg_color,
+          fg="black", font=("Arial", 18)).pack(pady=12)
+
+    #shows question
+    Label(root, text=question_text, bg=bg_color,
+          fg="black", font=("Arial", 32, "bold")).pack(pady=20)
+
+    #inputing the answer
+    global answer_entry
+    answer_entry = Entry(root, font=("Arial", 18), width=10, justify="center")
     answer_entry.pack(pady=10)
 
-    tk.Button(root, text="Submit Answer", command=check_answer).pack(pady=10)
+    #submit button
+    Button(root, text="Submit", command=lambda: check_answer(question_text),
+           bg=btn_color, fg="black", font=("Arial", 15)).pack(pady=14)
+    
+def check_answer(question_text):
+    global score, question_count, first_attempt
 
-def isCorrect(user_answer):
-    """Return True if answer correct."""
-    if operation == "+":
-        return user_answer == (num1 + num2)
-    else:
-        return user_answer == (num1 - num2)
-
-def check_answer():
-    """Check user’s input and score it."""
-    global score, attempts, current_question, num1, num2, operation
-
-    try:
-        user_answer = int(answer_entry.get())
-    except:
-        messagebox.showinfo("Error", "Please enter a number.")
+    user_ans = answer_entry.get()  #get the user's input
+    if user_ans.strip() == "":
+        messagebox.showwarning("Error", "Please enter an answer.")  #warning pop up if answer is left blank
         return
 
-    if isCorrect(user_answer):
-        if attempts == 1:
-            score += 10
-            messagebox.showinfo("Correct!", "Correct! +10 points")
-        else:
-            score += 5
-            messagebox.showinfo("Correct!", "Correct on second try! +5 points")
+    try:
+        user_ans = int(user_ans)  #convert input to integer
+    except:
+        messagebox.showwarning("Error", "Enter a valid number.")  #warning pop up if user did not input a integer
+        return
 
-        current_question += 1
-        if current_question > 10:
-            displayResults()
+    if user_ans == correct_answer:  #correct answer
+        if first_attempt:
+            score += 10  #adds 10 points for first try
         else:
-            # generate next question
-            attempts = 1
-            generate_question()
-            displayProblem()
+            score += 5  #adds 5 points for second try
+        answer_history.append((question_text, user_ans, correct_answer, True))  #saves history of answers
+        question_count += 1
 
-    else:
-        if attempts == 1:
-            attempts = 2
-            messagebox.showinfo("Wrong", "Incorrect! Try again.")
+        if question_count == 10:
+            displayResults()  #if 10 questions done, show results
         else:
-            messagebox.showinfo("Wrong", "Still incorrect. Moving to next question.")
-            current_question += 1
-            if current_question > 10:
+            show_question()  #shows next question
+
+    else:  #if its the wrong answer
+        if first_attempt:
+            messagebox.showerror("Incorrect", "Wrong answer :( please try again")  #first attempt warning
+            first_attempt = False  # next try won't show message
+        else:
+            answer_history.append((question_text, user_ans, correct_answer, False))  #saves wrong attempt
+            question_count += 1
+            if question_count == 10:
                 displayResults()
             else:
-                attempts = 1
-                generate_question()
-                displayProblem()
-
-def generate_question():
-    """Generate new question variables."""
-    global num1, num2, operation
-    num1 = randomInt(difficulty)
-    num2 = randomInt(difficulty)
-    operation = decideOperation()
+                show_question()
 
 def displayResults():
-    """Show final score + ranking."""
-    clear_frame()
-    grade = ""
+    clear_window()  
 
-    if score >= 90: grade = "A+"
-    elif score >= 80: grade = "A"
-    elif score >= 70: grade = "B"
-    elif score >= 60: grade = "C"
-    else: grade = "D"
+    #shows the final score
+    Label(root, text="Quiz Finished!", bg=bg_color, fg="black",
+          font=("Times new roman", 22, "bold")).pack(pady=18)
+    Label(root, text=f"Score: {score}/100", bg=bg_color,
+          fg="black", font=("Arial", 18)).pack(pady=10)
 
-    tk.Label(root, text=f"Your Final Score: {score}/100", font=("Arial", 24)).pack(pady=20)
-    tk.Label(root, text=f"Grade: {grade}", font=("Arial", 20)).pack(pady=10)
+    #shows personalized feedback
+    if score == 100:
+        feedback = "Good job! You're so smart"
+    elif score >= 60:
+        feedback = "Good job! You can do better next time"
+    else:
+        feedback = "It's okay you tried! I know you can do it next time"
 
-    tk.Button(root, text="Play Again", command=displayMenu).pack(pady=20)
-    tk.Button(root, text="Exit", command=root.quit).pack()
+    Label(root, text=feedback, bg=bg_color, fg="black",
+          font=("Arial", 16)).pack(pady=12)
+
+    #a scrollable frame to show all questions and answers
+    summary_frame = Frame(root, bg=bg_color)
+    summary_frame.pack(pady=10, fill=BOTH, expand=True)
+
+    canvas = Canvas(summary_frame, bg=bg_color)
+    scrollbar = Scrollbar(summary_frame, orient=VERTICAL, command=canvas.yview)
+    scroll_frame = Frame(canvas, bg=bg_color)
+
+    scroll_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+
+    canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    #displays all questions with the correct/incorrect answers
+    for q, user, correct, correct_bool in answer_history:
+        color = "green" if correct_bool else "red"
+        Label(scroll_frame, text=f"{q} Your answer: {user} | Correct: {correct}",
+              fg=color, bg=bg_color, font=("Arial", 14)).pack(anchor="w", pady=3)
+
+    canvas.pack(side=LEFT, fill=BOTH, expand=True)
+    scrollbar.pack(side=RIGHT, fill=Y)
+
+    #play again and quit buttons
+    Button(root, text="Play Again", command=reset_quiz,
+           bg=btn_color, fg="black", font=("Arial", 15)).pack(pady=10)
+    Button(root, text="Quit", command=root.destroy,
+           bg="#ffffff", fg="black", font=("Arial", 15)).pack(pady=6)
 
 def start_quiz(level):
-    """Initialize quiz values."""
-    global difficulty, score, current_question, attempts
-
+    global difficulty, score, question_count, answer_history
     difficulty = level
     score = 0
-    current_question = 1
-    attempts = 1
+    question_count = 0
+    answer_history = []
+    show_question()  #show first question
 
-    generate_question()
-    displayProblem()
+def reset_quiz():
+    displayMenu()
 
-def clear_frame():
-    """Remove all widgets from the window."""
+def clear_window():
     for widget in root.winfo_children():
-        widget.pack_forget()
+        widget.destroy()
 
-# -----------------------------
-# MAIN WINDOW
-# -----------------------------
+root = Tk()
+root.title("Math Quiz")
+root.geometry("500x600")   
 
-root = tk.Tk()
-root.title("Maths Quiz")
-root.geometry("500x400")
+bg_color = "#ffd6e7"  
+btn_color = "#ffecf2"  
 
-answer_entry = tk.Entry(root, font=("Arial", 20))
+root.configure(bg=bg_color)
 
-displayMenu()
-
-root.mainloop()
-
-
-
-root.mainloop()
+displayMenu()  #shows menu on start
+root.mainloop()  #starts Tkinter loop
+    
