@@ -10,6 +10,15 @@ correct_answer = None  #stores the correct answer for the current question
 first_attempt = True  #checks if user is on first attempt for a question 
 answer_history = []  #stores tuples of question, user answer, correct answer
 
+def displayTitleScreen():
+    clear_window()
+
+    Label(root, text="Math Quiz", bg=bg_color, fg="black",
+          font=("Times New Roman", 28, "bold")).pack(pady=80)
+
+    Button(root, text="Play", command=displayMenu,
+           bg=btn_color, fg="black", font=("Arial", 18), width=10).pack(pady=20)
+
 def displayMenu():
     clear_window()  #removes all widgets from the window
 
@@ -190,6 +199,6 @@ btn_color = "#ffecf2"
 
 root.configure(bg=bg_color)
 
-displayMenu()  #shows menu on start
-root.mainloop()  #starts Tkinter loop
+displayTitleScreen()
+root.mainloop()
     
