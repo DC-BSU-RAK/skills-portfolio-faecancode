@@ -81,13 +81,13 @@ def check_answer(question_text):
 
     user_ans = answer_entry.get()  #get the user's input
     if user_ans.strip() == "":
-        messagebox.showwarning("Error", "Please enter an answer.")  #warning pop up if answer is left blank
+        messagebox.showwarning("Error", "please write your answer")  #warning pop up if answer is left blank
         return
 
     try:
         user_ans = int(user_ans)  #convert input to integer
     except:
-        messagebox.showwarning("Error", "Enter a valid number.")  #warning pop up if user did not input a integer
+        messagebox.showwarning("Error", "please write a number")  #warning pop up if user did not input a integer
         return
 
     if user_ans == correct_answer:  #correct answer
@@ -105,7 +105,7 @@ def check_answer(question_text):
 
     else:  #if its the wrong answer
         if first_attempt:
-            messagebox.showerror("Incorrect", "Wrong answer :( please try again")  #first attempt warning
+            messagebox.showerror("Incorrect", "wrong answer :( please try again")  #first attempt warning
             first_attempt = False  # next try won't show message
         else:
             answer_history.append((question_text, user_ans, correct_answer, False))  #saves wrong attempt
